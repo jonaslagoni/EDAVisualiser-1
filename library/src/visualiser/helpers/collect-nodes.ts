@@ -11,6 +11,8 @@ import {
   MessageData,
   SystemViewData,
   EdgeType,
+  ChannelViewData,
+  ChannelNodeData,
 } from '../../types';
 
 export function collectApplicationNodes(
@@ -41,6 +43,69 @@ export function collectApplicationNodes(
     });
   }
 
+  return nodes;
+}
+
+const interactsWithChannel = (
+  application: ApplicationViewData,
+  channel: ChannelNodeData,
+) => {
+  if (application.asyncapi) {
+    for (const channelPath of Object.keys(
+      application.asyncapi.document.channels(),
+    )) {
+      if (channelPath === channel?.channel) {
+        return true;
+      }
+    }
+  } else if (application.application) {
+  }
+
+  if (application.incomingOperations) {
+    for (const operation of application.incomingOperations) {
+      if (operation.channel === channel?.channel) {
+        return true;
+      }
+    }
+  }
+  if (application.outgoingOperations) {
+    for (const operation of application.outgoingOperations) {
+      if (operation.channel === channel?.channel) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+export function collectChannelConnections(
+  { applications, channel }: ChannelViewData,
+  edgeType: EdgeType = 'smoothstep',
+): Array<FlowElement> {
+  const nodes: Array<FlowElement> = [];
+
+  if (channel) {
+    nodes.push(...createChannelNode(channel));
+  }
+
+  if (applications) {
+    applications.forEach(application => {
+      const isInteractingWithChannel = interactsWithChannel(
+        application,
+        channel,
+      );
+      if (isInteractingWithChannel) {
+        if (application.asyncapi) {
+          nodes.push(
+            ...collectAsyncAPINodes(application.asyncapi, {
+              edgeType,
+            }),
+          );
+        } else if (application.application) {
+          nodes.push(...createExternalApplicationNode(application.application));
+        }
+      }
+    });
+  }
   return nodes;
 }
 
@@ -314,6 +379,16 @@ export function createAsyncAPIApplication(
     topExtended,
   };
   return createApplicationNodeFn(applicationNodeData);
+}
+export function createChannelNode(data: ChannelNodeData): Array<FlowElement> {
+  return [
+    {
+      id: data.id,
+      type: 'channelNode',
+      data: { ...data, nodeWidth: 700, nodeHeight: 300 },
+      position: { x: 0, y: 0 },
+    },
+  ] as Node[];
 }
 
 export function createApplicationNode(

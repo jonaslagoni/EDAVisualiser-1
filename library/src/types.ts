@@ -25,6 +25,11 @@ export interface ApplicationFocusViewData {
   outgoingOperations?: Array<OutgoingNodeData>;
 }
 
+export interface ChannelViewData {
+  applications?: Array<ApplicationViewData>;
+  channel: ChannelNodeData;
+}
+
 export interface SystemViewData {
   applications: Array<ApplicationViewData>;
 }
@@ -85,6 +90,17 @@ export interface ApplicationNodeProps {
 
 export interface MessageData {
   title: string;
+}
+export interface ChannelNodeData {
+  id: string;
+  description?: string;
+  channel: string;
+  messages?: MessageData[];
+  forApplication?: string;
+}
+
+export interface ChannelNodeProps {
+  data: ChannelNodeData;
 }
 
 export interface IncomingNodeData {
